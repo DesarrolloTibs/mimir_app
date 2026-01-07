@@ -1,0 +1,11 @@
+# Ignorar dependencias de Node, se instalarán dentro del contenedor
+node_modules
+
+# Ignorar archivos de build locales (la imagen los genera)
+dist
+
+# Otros archivos que no deben ir en la imagen
+.git
+.gitignore
+.env*
+!.env.docker
