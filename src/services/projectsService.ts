@@ -6,3 +6,8 @@ export async function createProject(project: Omit<Project, 'id' | 'createdAt'>):
     const response = await axiosInstance.post(PROJECTS.PROJECTS, project);
     return response.data;
 }
+
+export async function getProjects(): Promise<Project[]> {
+    const response = await axiosInstance.get(PROJECTS.PROJECTS);
+    return response.data;
+}

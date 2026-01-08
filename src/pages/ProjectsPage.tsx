@@ -3,25 +3,32 @@ import { Plus } from 'lucide-react';
 
 import ProjectsTable from '../components/Projects/ProjectsTable';
 import ProjectCreateModal from '../components/Projects/ProjectCreateModal';
-import { createProject } from '../services/projectsService';
+import { createProject, getProjects } from '../services/projectsService';
 import type { Project } from '../core/models/Project';
+import Loader from '../components/Loader/Loader';
 
-// Mock function to get projects, will be replaced by a service call
-async function getProjects(): Promise<Project[]> {
-  // In a real app, this would fetch from an API
-  return Promise.resolve([]);
-}
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchProjects = async () => {
+    setPageLoading(true);
+    try {
+        const data = await getProjects();
+        setProjects(data);
+    } catch (error) {
+        setError('No se pudieron cargar los proyectos');
+    } finally {
+        setPageLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // In a real implementation, you would fetch the projects here.
-    // For now, we start with an empty list.
-    // getProjects().then(setProjects);
+    fetchProjects();
   }, []);
 
   const handleOpenModal = () => setIsModalOpen(true);
@@ -61,7 +68,7 @@ const ProjectsPage: React.FC = () => {
         <span className="block sm:inline">{error}</span>
       </div>}
 
-      <ProjectsTable projects={projects} />
+      {pageLoading ? <Loader /> : <ProjectsTable projects={projects} />}
 
       <ProjectCreateModal
         open={isModalOpen}

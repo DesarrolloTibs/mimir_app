@@ -70,7 +70,7 @@ const ProfileImageUploadModal: React.FC<ProfileImageUploadModalProps> = ({ user,
     <div className="p-4">
       <Notification {...notification} onCancel={hideNotification} />
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Subir Imagen de Perfil</h2>
-      <p className="text-gray-600 mb-6">Para el usuario: <span className="font-semibold">{user.username}</span></p>
+      <p className="text-gray-600 mb-6">Para el usuario: <span className="font-semibold">{user.fullName}</span></p>
 
       <div 
         onDrop={handleDrop}

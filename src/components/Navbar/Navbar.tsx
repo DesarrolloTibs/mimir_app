@@ -23,7 +23,7 @@ const Navbar: React.FC<Props> = ({ toggleSidebar, isSidebarOpen }) => {
 
             {/* Información del usuario */}
             <div className="flex items-center gap-4">
-                <span className="text-gray-600">Hola, <span className="font-semibold">{user?.username || 'Usuario'}</span></span>
+                <span className="text-gray-600">Hola, <span className="font-semibold">{user?.fullName || 'Usuario'}</span></span>
                 {/* Aquí se podría añadir un menú desplegable para el perfil y logout */}
             </div>
         </header>

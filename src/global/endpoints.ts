@@ -12,3 +12,9 @@ export const PROJECTS = {
     PROJECTS: urlBase + 'projects',
 };
 
+export const DOCUMENTS = {
+    DOCUMENTS: urlBase + 'documents',
+    DOCUMENTS_BY_PROJECT: (projectId: string) => `${urlBase}projects/${projectId}/documents`,
+    UPLOAD: (projectId: string) => `${urlBase}projects/${projectId}/documents/upload`
+};
+
