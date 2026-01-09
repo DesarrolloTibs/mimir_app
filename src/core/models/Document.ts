@@ -5,4 +5,5 @@ export interface Document {
   fileSize: number;
   uploadDate: string;
   projectId: string;
+  fileStatus:string;
 }

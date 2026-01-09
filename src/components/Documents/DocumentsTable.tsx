@@ -27,7 +27,7 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({ documents, onDelete }) 
                   <span className="font-medium text-gray-900">{doc.fileName}</span>
                 </div>
               </td>
-              <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500">{new Date(doc.uploadDate).toLocaleDateString()}</td>
+              <td className="py-4 px-6 whitespace-nowrap text-sm text-gray-500">{doc.fileStatus}</td>
               <td className="py-4 px-6 whitespace-nowrap text-right">
                 <button onClick={() => onDelete(doc.id)} className="text-red-600 hover:text-red-900">
                   <Trash2 className="h-5 w-5" />
