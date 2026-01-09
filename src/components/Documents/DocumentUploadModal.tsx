@@ -33,8 +33,7 @@ const DocumentUploadModal: React.FC<DocumentUploadModalProps> = ({ open, onClose
   };
 
   return (
-    <Modal open={open} onClose={onClose}>
-      <h2 className="text-2xl font-bold mb-4">Subir Documentos</h2>
+    <Modal open={open} onClose={onClose} title="Subir Documentos">
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}

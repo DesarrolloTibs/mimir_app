@@ -277,7 +277,7 @@ const UsersPage: React.FC = () => {
                         onPageChange={handlePageChange}
                     />
                 )}
-                <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+                <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Usuario' : 'Crear Usuario'}>
                     <UserForm
                         initialData={editing || undefined}
                         onSubmit={editing ? handleUpdate : handleCreate}
@@ -285,7 +285,7 @@ const UsersPage: React.FC = () => {
                     />
                 </Modal>
                 {/* Nuevo Modal para subir imagen */}
-                <Modal open={!!uploadingUser} onClose={closeUploadModal}>
+                <Modal open={!!uploadingUser} onClose={closeUploadModal} title="Subir Imagen de Perfil">
                     {uploadingUser && (
                         <ProfileImageUploadModal
                             user={uploadingUser}

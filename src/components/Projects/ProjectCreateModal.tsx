@@ -43,9 +43,8 @@ const ProjectCreateModal: React.FC<Props> = ({ open, onClose, onSubmit, isLoadin
   };
 
   return (
-    <Modal open={open} onClose={onClose} maxWidth="max-w-2xl" height="h-auto">
+    <Modal open={open} onClose={onClose} maxWidth="max-w-2xl" height="h-auto" title="Crear Nuevo Proyecto">
       <div className="p-2">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Crear Nuevo Proyecto</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <fieldset>
             <div>

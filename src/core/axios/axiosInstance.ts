@@ -3,7 +3,7 @@ import { setupInterceptors } from './interceptors';
 
 const axiosInstance = axios.create({
     // Puedes agregar configuración global aquí
-    timeout: 10000,
+    timeout: 100000,
 });
 
 setupInterceptors(axiosInstance);

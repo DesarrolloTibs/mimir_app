@@ -1,38 +1,62 @@
-import React from 'react';
-import { X } from 'lucide-react';
+// src/components/Modal/Modal.tsx
 
-export interface ModalProps {
+import React from 'react';
+
+interface ModalProps {
   open: boolean;
   onClose: () => void;
+  title: string;
   children: React.ReactNode;
-  maxWidth?: string; // Prop opcional para definir el ancho máximo
-  height?: string; // Prop opcional para definir la altura fija
+  maxWidth?: string; // Optional maxWidth prop
+  height?: string; // Optional height prop
 }
 
-const Modal: React.FC<ModalProps> = ({ 
-  open, 
-  onClose, 
-  children, 
-  maxWidth = 'max-w-6xl', 
-  height = 'h-[95vh]' // Altura fija por defecto (90% de la altura de la ventana)
-}) => {
+const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, maxWidth = 'max-w-2xl', height = 'h-auto' }) => {
   if (!open) return null;
 
+  const modalClasses = `relative p-5 border w-full ${maxWidth} ${height} shadow-lg rounded-md bg-white transform transition-all duration-300 ease-out scale-95 opacity-0`;
+  
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 transition-opacity"
+      className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center"
+      onClick={onClose}
     >
       <div
-        className={`bg-white rounded-lg shadow-xl w-full ${maxWidth} ${height} relative flex flex-col`}
-        onClick={e => e.stopPropagation()}
+        className={modalClasses}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+        style={{
+          transform: open ? 'scale(1) opacity(1)' : 'scale(0.95) opacity(0)',
+          transition: 'transform 0.2s ease-out, opacity 0.2s ease-out',
+          opacity: open ? '1' : '0',
+          animation: 'modal-fade-in 0.3s forwards',
+        }}
       >
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full p-1.5 transition-colors z-10">
-          <X size={24} />
-        </button>
-        <div className="p-6 flex-grow h-full overflow-y-auto">
+        <div className="flex justify-between items-center pb-3">
+          <h3 className="text-2xl font-bold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div className="mt-2 text-gray-700">
           {children}
         </div>
       </div>
+      <style>{`
+        @keyframes modal-fade-in {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 };

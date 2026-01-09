@@ -6,7 +6,8 @@ import ProjectCreateModal from '../components/Projects/ProjectCreateModal';
 import { createProject, getProjects } from '../services/projectsService';
 import type { Project } from '../core/models/Project';
 import Loader from '../components/Loader/Loader';
-
+import EstimationGenerator from '../components/Projects/EstimationGenerator'; // Import EstimationGenerator
+import Modal from '../components/Modal/Modal'; // Assuming a generic Modal component exists
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -14,6 +15,11 @@ const ProjectsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // State for estimation
+  const [selectedProjectForEstimationId, setSelectedProjectForEstimationId] = useState<string | null>(null);
+  const [selectedDocumentForEstimationId, setSelectedDocumentForEstimationId] = useState<string | null>(null);
+  const [isEstimationModalOpen, setIsEstimationModalOpen] = useState<boolean>(false);
 
   const fetchProjects = async () => {
     setPageLoading(true);
@@ -33,6 +39,19 @@ const ProjectsPage: React.FC = () => {
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
+
+  // Handlers for estimation
+  const handleOpenEstimationModal = (projectId: string, documentId: string) => {
+    setSelectedProjectForEstimationId(projectId);
+    setSelectedDocumentForEstimationId(documentId);
+    setIsEstimationModalOpen(true);
+  };
+
+  const handleCloseEstimationModal = () => {
+    setSelectedProjectForEstimationId(null);
+    setSelectedDocumentForEstimationId(null);
+    setIsEstimationModalOpen(false);
+  };
 
   const handleSubmitProject = async (projectData: Omit<Project, 'id' | 'createdAt'>) => {
     setIsLoading(true);
@@ -68,7 +87,7 @@ const ProjectsPage: React.FC = () => {
         <span className="block sm:inline">{error}</span>
       </div>}
 
-      {pageLoading ? <Loader /> : <ProjectsTable projects={projects} />}
+      {pageLoading ? <Loader /> : <ProjectsTable projects={projects} onSelectProjectAndDocumentForEstimation={handleOpenEstimationModal} />}
 
       <ProjectCreateModal
         open={isModalOpen}
@@ -76,8 +95,19 @@ const ProjectsPage: React.FC = () => {
         onSubmit={handleSubmitProject}
         isLoading={isLoading}
       />
+
+      {/* Estimation Modal */}
+      {isEstimationModalOpen && selectedProjectForEstimationId && selectedDocumentForEstimationId && (
+        <Modal open={isEstimationModalOpen} onClose={handleCloseEstimationModal} title="Generar Estimación">
+          <EstimationGenerator
+            projectId={selectedProjectForEstimationId}
+            documentId={selectedDocumentForEstimationId}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
 
 export default ProjectsPage;
+

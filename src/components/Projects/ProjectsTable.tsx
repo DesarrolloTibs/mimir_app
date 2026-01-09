@@ -9,9 +9,10 @@ import Notification from '../Modal/Notification';
 
 interface Props {
   projects: Project[];
+  onSelectProjectAndDocumentForEstimation: (projectId: string, documentId: string) => void;
 }
 
-const ProjectsTable: React.FC<Props> = ({ projects }) => {
+const ProjectsTable: React.FC<Props> = ({ projects, onSelectProjectAndDocumentForEstimation }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -145,7 +146,7 @@ const ProjectsTable: React.FC<Props> = ({ projects }) => {
                 {expandedProjectId === project.id && (
                   <tr>
                     <td colSpan={6} className="p-4 bg-gray-50">
-                      <DocumentsTable documents={documents} onDelete={handleDeleteDocument} />
+                      <DocumentsTable documents={documents} onDelete={handleDeleteDocument} onSelectForEstimation={(documentId) => project.id && onSelectProjectAndDocumentForEstimation(project.id, documentId)} />
                     </td>
                   </tr>
                 )}

@@ -18,3 +18,7 @@ export const DOCUMENTS = {
     UPLOAD: (projectId: string) => `${urlBase}projects/${projectId}/documents/upload`
 };
 
+export const ESTIMATIONS = {
+    GENERATE: urlBase + 'estimations/generate',
+};
+
