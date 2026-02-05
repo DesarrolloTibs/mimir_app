@@ -1,14 +1,16 @@
 import React from 'react';
-import { FileText, Trash2, Calculator } from 'lucide-react'; // Import Calculator icon
+import { FileText, Trash2, Calculator, ClipboardList } from 'lucide-react'; // Import Calculator icon
 import type { Document } from '../../core/models/Document';
 
 interface DocumentsTableProps {
   documents: Document[];
   onDelete: (documentId: string) => void;
-  onSelectForEstimation: (documentId: string) => void; // New prop for estimation
+  onSelectForEstimation: (documentId: string) => void;
+  requirementId?: string;
+  onViewEstimation?: (requirementId: string) => void;
 }
 
-const DocumentsTable: React.FC<DocumentsTableProps> = ({ documents, onDelete, onSelectForEstimation }) => {
+const DocumentsTable: React.FC<DocumentsTableProps> = ({ documents, onDelete, onSelectForEstimation, requirementId, onViewEstimation }) => {
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full bg-white">
@@ -31,9 +33,20 @@ const DocumentsTable: React.FC<DocumentsTableProps> = ({ documents, onDelete, on
               </td>,
               <td key="uploadDate" className="py-4 px-6 whitespace-nowrap text-sm text-gray-500">{doc.fileStatus}</td>,
               <td key="actions" className="py-4 px-6 whitespace-nowrap text-right">
-                <button onClick={() => onDelete(doc.id)} className="text-red-600 hover:text-red-900">
-                  <Trash2 className="h-5 w-5" />
-                </button>
+                <div className="flex items-center justify-end gap-2">
+                  <button onClick={() => onDelete(doc.id)} className="text-red-600 hover:text-red-900" title="Eliminar">
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                  {requirementId && (
+                    <button
+                      onClick={() => onViewEstimation && onViewEstimation(requirementId)}
+                      className="text-emerald-600 hover:text-emerald-900"
+                      title="Ver Estimación"
+                    >
+                      <ClipboardList className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
               </td>,
               <td key="estimation" className="py-4 px-6 whitespace-nowrap text-right">
                 <button

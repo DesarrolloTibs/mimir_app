@@ -20,5 +20,6 @@ export const DOCUMENTS = {
 
 export const ESTIMATIONS = {
     GENERATE: urlBase + 'estimations/generate',
+    GET_BY_REQUIREMENT: (requirementId: string) => `${urlBase}estimations/requirement/${requirementId}`,
 };
 

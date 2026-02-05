@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { estimationService } from '../../services/estimationService';
-import type { GenerateEstimationDto, EstimationResponseDto, EstimationTaskDto } from '../../core/models/Estimation';
-import Loader from '../Loader/Loader'; // Assuming Loader is a named export or default
+import type { GenerateEstimationDto, EstimationResponseDto } from '../../core/models/Estimation';
+import Loader from '../Loader/Loader';
+import EstimationTable from './EstimationTable';
 
 interface EstimationGeneratorProps {
   projectId: string;
-  documentId: string; // This needs to be selected by the user, but for now, we assume it's passed.
+  documentId: string;
 }
 
 const EstimationGenerator: React.FC<EstimationGeneratorProps> = ({ projectId, documentId }) => {
@@ -25,7 +26,7 @@ const EstimationGenerator: React.FC<EstimationGeneratorProps> = ({ projectId, do
     try {
       const payload: GenerateEstimationDto = {
         projectId,
-        documentId, // In a real scenario, this would be user-selected
+        documentId,
         requirementText,
       };
       const result = await estimationService.generateEstimation(payload);
@@ -35,12 +36,6 @@ const EstimationGenerator: React.FC<EstimationGeneratorProps> = ({ projectId, do
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const getConfidenceBadgeClass = (score: number) => {
-    if (score < 50) return 'bg-red-500';
-    if (score <= 80) return 'bg-yellow-500';
-    return 'bg-green-500';
   };
 
   const SkeletonLoader = () => (
@@ -79,7 +74,7 @@ const EstimationGenerator: React.FC<EstimationGeneratorProps> = ({ projectId, do
         >
           {isLoading ? (
             <>
-              <Loader /> {/* Re-using the existing spinner, could be replaced with a custom small spinner if preferred */}
+              <Loader />
               <span className="ml-2">Generando...</span>
             </>
           ) : (
@@ -99,46 +94,12 @@ const EstimationGenerator: React.FC<EstimationGeneratorProps> = ({ projectId, do
 
       {estimationResult && (
         <div className="mt-8">
-          <h3 className="text-xl font-semibold mb-3">Resumen de la Estimación:</h3>
-          <p className="mb-4">{estimationResult.summary}</p>
-          
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tarea
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Capa
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Horas Sugeridas
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Justificación
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {estimationResult.tasks.map((task: EstimationTaskDto, index: number) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{task.description}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.layer}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.hours}</td>
-                    <td className="px-6 py-4 whitespace-pre-wrap text-sm text-gray-500 max-w-xs">{task.reason}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="mt-6 flex items-center space-x-4">
-            <p className="text-md font-medium text-gray-700">Total Horas Estimadas: <span className="font-bold">{estimationResult.totalHours}</span></p>
-            <div className={`px-3 py-1 rounded-full text-white text-sm font-semibold ${getConfidenceBadgeClass(estimationResult.confidenceScore)}`}>
-              Confianza: {estimationResult.confidenceScore}%
-            </div>
-          </div>
+           <EstimationTable 
+            summary={estimationResult.summary}
+            tasks={estimationResult.tasks}
+            totalHours={estimationResult.totalHours}
+            confidenceScore={estimationResult.confidenceScore}
+           />
         </div>
       )}
     </div>

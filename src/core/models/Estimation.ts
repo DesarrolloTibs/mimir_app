@@ -16,6 +16,7 @@ export interface EstimationTaskDto {
 export interface EstimationResponseDto {
   summary: string;
   tasks: EstimationTaskDto[];
+  estimationItems?: any[]; // Fallback for different response structure
   totalHours: number;
   confidenceScore: number;
 }

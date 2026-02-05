@@ -4,8 +4,11 @@ import { Inbox, UploadCloud } from 'lucide-react';
 import DocumentUploadModal from '../Documents/DocumentUploadModal';
 import DocumentsTable from '../Documents/DocumentsTable';
 import { uploadDocuments, getDocumentsByProjectId, deleteDocument } from '../../services/documentService';
+import { estimationService } from '../../services/estimationService';
 import type { Document } from '../../core/models/Document';
+import type { EstimationResponseDto } from '../../core/models/Estimation';
 import Notification from '../Modal/Notification';
+import EstimationResultModal from './EstimationResultModal';
 
 interface Props {
   projects: Project[];
@@ -18,12 +21,33 @@ const ProjectsTable: React.FC<Props> = ({ projects, onSelectProjectAndDocumentFo
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(null);
+  const [estimationModalOpen, setEstimationModalOpen] = useState(false);
+  const [currentEstimation, setCurrentEstimation] = useState<EstimationResponseDto | null>(null);
   const [notification, setNotification] = useState<{
     show: boolean;
     type: 'success' | 'error';
     title: string;
     message: string;
   } | null>(null);
+
+  const handleViewEstimation = async (requirementId: string) => {
+    setIsLoading(true);
+    try {
+      const data = await estimationService.getEstimationByRequirementId(requirementId);
+      setCurrentEstimation(data);
+      setEstimationModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching estimation:', error);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: 'No se pudo cargar la estimación.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleOpenModal = (project: Project) => {
     setSelectedProject(project);
@@ -134,8 +158,8 @@ const ProjectsTable: React.FC<Props> = ({ projects, onSelectProjectAndDocumentFo
                     </button>
                   </td>
                   <td className="p-4 font-semibold text-gray-900">{project.name}</td>
-                  <td className="p-4 text-gray-700">{project.client}</td>
-                  <td className="p-4 text-gray-700">{project.techStack}</td>
+                  <td className="p-4 text-gray-700">{project.clientName}</td>
+                  <td className="p-4 text-gray-700">{project.techStackContext}</td>
                   <td className="p-4 text-gray-700">{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '-'}</td>
                   <td className="p-4 rounded-r-lg">
                     <button onClick={() => handleOpenModal(project)} className="text-indigo-600 hover:text-indigo-900">
@@ -146,7 +170,13 @@ const ProjectsTable: React.FC<Props> = ({ projects, onSelectProjectAndDocumentFo
                 {expandedProjectId === project.id && (
                   <tr>
                     <td colSpan={6} className="p-4 bg-gray-50">
-                      <DocumentsTable documents={documents} onDelete={handleDeleteDocument} onSelectForEstimation={(documentId) => project.id && onSelectProjectAndDocumentForEstimation(project.id, documentId)} />
+                      <DocumentsTable 
+                        documents={documents} 
+                        onDelete={handleDeleteDocument} 
+                        onSelectForEstimation={(documentId) => project.id && onSelectProjectAndDocumentForEstimation(project.id, documentId)}
+                        requirementId={project.requirement?.id}
+                        onViewEstimation={handleViewEstimation}
+                      />
                     </td>
                   </tr>
                 )}
@@ -173,6 +203,12 @@ const ProjectsTable: React.FC<Props> = ({ projects, onSelectProjectAndDocumentFo
           isLoading={isLoading}
         />
       )}
+      
+      <EstimationResultModal 
+        isOpen={estimationModalOpen}
+        onClose={() => setEstimationModalOpen(false)}
+        estimationResult={currentEstimation}
+      />
     </div>
   );
 };
