@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-
 import ProjectsTable from '../components/Projects/ProjectsTable';
 import ProjectCreateModal from '../components/Projects/ProjectCreateModal';
 import { createProject, getProjects } from '../services/projectsService';
 import type { Project } from '../core/models/Project';
 import Loader from '../components/Loader/Loader';
-import EstimationGenerator from '../components/Projects/EstimationGenerator'; // Import EstimationGenerator
-import Modal from '../components/Modal/Modal'; // Assuming a generic Modal component exists
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -16,20 +13,15 @@ const ProjectsPage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for estimation
-  const [selectedProjectForEstimationId, setSelectedProjectForEstimationId] = useState<string | null>(null);
-  const [selectedDocumentForEstimationId, setSelectedDocumentForEstimationId] = useState<string | null>(null);
-  const [isEstimationModalOpen, setIsEstimationModalOpen] = useState<boolean>(false);
-
   const fetchProjects = async () => {
     setPageLoading(true);
     try {
-        const data = await getProjects();
-        setProjects(data);
-    } catch (error) {
-        setError('No se pudieron cargar los proyectos');
+      const data = await getProjects();
+      setProjects(data);
+    } catch {
+      setError('No se pudieron cargar los proyectos');
     } finally {
-        setPageLoading(false);
+      setPageLoading(false);
     }
   };
 
@@ -40,30 +32,15 @@ const ProjectsPage: React.FC = () => {
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  // Handlers for estimation
-  const handleOpenEstimationModal = (projectId: string, documentId: string) => {
-    setSelectedProjectForEstimationId(projectId);
-    setSelectedDocumentForEstimationId(documentId);
-    setIsEstimationModalOpen(true);
-  };
-
-  const handleCloseEstimationModal = () => {
-    setSelectedProjectForEstimationId(null);
-    setSelectedDocumentForEstimationId(null);
-    setIsEstimationModalOpen(false);
-  };
-
   const handleSubmitProject = async (projectData: Omit<Project, 'id' | 'createdAt'>) => {
     setIsLoading(true);
     setError(null);
     try {
       const newProject = await createProject(projectData);
-      // Optimistic UI update
       setProjects(prevProjects => [newProject, ...prevProjects]);
       handleCloseModal();
-    } catch (err) {
+    } catch {
       setError('Failed to create project. Please try again.');
-      // Using alert as a placeholder for the toast notification
       alert('Error: No se pudo crear el proyecto.');
     } finally {
       setIsLoading(false);
@@ -73,10 +50,13 @@ const ProjectsPage: React.FC = () => {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Proyectos</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Proyectos</h1>
+          <p className="text-sm text-gray-500 mt-1">Selecciona un proyecto para abrir el espacio de trabajo.</p>
+        </div>
         <button
           onClick={handleOpenModal}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 flex items-center transition-colors shadow-sm"
         >
           <Plus size={20} className="mr-2" />
           Nuevo Proyecto
@@ -87,7 +67,9 @@ const ProjectsPage: React.FC = () => {
         <span className="block sm:inline">{error}</span>
       </div>}
 
-      {pageLoading ? <Loader /> : <ProjectsTable projects={projects} onSelectProjectAndDocumentForEstimation={handleOpenEstimationModal} />}
+      {pageLoading ? <Loader /> : (
+        <ProjectsTable projects={projects} />
+      )}
 
       <ProjectCreateModal
         open={isModalOpen}
@@ -95,16 +77,6 @@ const ProjectsPage: React.FC = () => {
         onSubmit={handleSubmitProject}
         isLoading={isLoading}
       />
-
-      {/* Estimation Modal */}
-      {isEstimationModalOpen && selectedProjectForEstimationId && selectedDocumentForEstimationId && (
-        <Modal open={isEstimationModalOpen} onClose={handleCloseEstimationModal} title="Generar Estimación">
-          <EstimationGenerator
-            projectId={selectedProjectForEstimationId}
-            documentId={selectedDocumentForEstimationId}
-          />
-        </Modal>
-      )}
     </div>
   );
 };

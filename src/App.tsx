@@ -7,12 +7,13 @@ import Layout from './components/Layout/Layout'; // Importar el Layout
 import '../src/components/Sidebar/animations.css' // Importar los estilos globales
 
 import ProjectsPage from './pages/ProjectsPage';
+import ProjectDetailsPage from './pages/ProjectDetailsPage';
 
 const App: React.FC = () => (
     <BrowserRouter>
         <Routes>
             <Route path="/login" element={<LoginPage />} />
-           
+
             <Route
                 path="/users"
                 element={
@@ -29,6 +30,16 @@ const App: React.FC = () => (
                     <ProtectedRoute>
                         <Layout>
                             <ProjectsPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/projects/:id"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ProjectDetailsPage />
                         </Layout>
                     </ProtectedRoute>
                 }
