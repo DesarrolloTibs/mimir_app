@@ -26,6 +26,7 @@ export const ESTIMATIONS = {
 
 export const CHAT = {
     MESSAGE: urlBase + 'chat/message',
+    MESSAGE_STREAM: urlBase + 'chat/message-stream',
     SESSIONS_BY_PROJECT: (projectId: string) => `${urlBase}chat/sessions/project/${projectId}`,
     MESSAGES_BY_SESSION: (sessionId: string) => `${urlBase}chat/sessions/${sessionId}/messages`,
 };

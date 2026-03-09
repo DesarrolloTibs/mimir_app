@@ -36,33 +36,63 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ projectId, isOpen, onClose }) =
 
         const userMessage: Message = { role: 'user', content: inputText };
         setMessages(prev => [...prev, userMessage]);
+
+        // Setup initial empty bot message that will be populated by the stream
+        const streamingBotMessageIndex = messages.length + 1;
+        setMessages(prev => [...prev, { role: 'bot', content: '' }]);
+
         setInputText('');
         setIsLoading(true);
 
         try {
-            const response = await chatService.postChatMessage({
-                projectId,
-                sessionId,
-                message: userMessage.content
-            });
-
-            if (!sessionId) {
-                setSessionId(response.sessionId);
-            }
-
-            const botMessage: Message = {
-                role: 'bot',
-                content: response.answer,
-                citations: response.citations
-            };
-            setMessages(prev => [...prev, botMessage]);
+            await chatService.postChatMessageStream(
+                {
+                    projectId,
+                    sessionId,
+                    message: userMessage.content
+                },
+                (chunk) => {
+                    if (chunk.type === 'session_created') {
+                        setSessionId(chunk.sessionId);
+                    } else if (chunk.type === 'token') {
+                        // Append token to the streaming message
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[streamingBotMessageIndex] = {
+                                ...newMessages[streamingBotMessageIndex],
+                                content: newMessages[streamingBotMessageIndex].content + chunk.text
+                            };
+                            return newMessages;
+                        });
+                        scrollToBottom();
+                    } else if (chunk.type === 'done') {
+                        // Update with final citations if any
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[streamingBotMessageIndex] = {
+                                ...newMessages[streamingBotMessageIndex],
+                                content: chunk.finalAnswer,
+                                citations: chunk.citations
+                            };
+                            return newMessages;
+                        });
+                        setIsLoading(false);
+                    }
+                },
+                (error) => {
+                    console.error('Streaming error:', error);
+                    setMessages(prev => {
+                        const newMessages = [...prev];
+                        newMessages[streamingBotMessageIndex] = {
+                            role: 'bot',
+                            content: 'Error al conectar con Mimir. Por favor, intenta de nuevo.'
+                        };
+                        return newMessages;
+                    });
+                    setIsLoading(false);
+                }
+            );
         } catch {
-            const errorMessage: Message = {
-                role: 'bot',
-                content: 'Error al conectar con Mimir. Por favor, intenta de nuevo.'
-            };
-            setMessages(prev => [...prev, errorMessage]);
-        } finally {
             setIsLoading(false);
         }
     };
@@ -106,7 +136,15 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ projectId, isOpen, onClose }) =
                                         : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none shadow-sm'
                                         }`}
                                 >
-                                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                    {msg.content ? (
+                                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                                    ) : (
+                                        <div className="flex items-center space-x-1 h-5 px-1 py-1">
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -129,18 +167,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ projectId, isOpen, onClose }) =
                     ))
                 )}
 
-                {isLoading && (
-                    <div className="self-start flex space-x-2 mt-2">
-                        <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                            <Bot size={16} />
-                        </div>
-                        <div className="bg-white border text-gray-500 border-gray-200 p-3 rounded-2xl rounded-tl-none shadow-sm flex items-center space-x-1">
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                    </div>
-                )}
+                {/* Loading indicator removed as the streaming message bubble acts as the placeholder */}
                 <div ref={messagesEndRef} />
             </div>
 

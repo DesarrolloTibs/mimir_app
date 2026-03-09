@@ -92,41 +92,73 @@ const ProjectChat: React.FC<ProjectChatProps> = ({ projectId }) => {
             createdAt: new Date().toISOString()
         };
         setMessages(prev => [...prev, optimisticUserMsg]);
+
+        // Setup initial empty bot message that will be populated by the stream
+        const streamingBotMessageIndex = messages.length + 1;
+        setMessages(prev => [...prev, {
+            id: Date.now().toString() + '-bot',
+            sessionId: selectedSessionId || 'temp',
+            role: 'bot',
+            content: '',
+            createdAt: new Date().toISOString()
+        }]);
+
         setIsSending(true);
 
         try {
-            const response = await chatService.postChatMessage({
-                projectId,
-                sessionId: selectedSessionId || undefined,
-                message: currentInput
-            });
+            let actualSessionId = selectedSessionId;
 
-            // If it was a new session, update the session ID and refresh sessions
-            if (!selectedSessionId) {
-                setSelectedSessionId(response.sessionId);
-                fetchSessions();
-            }
-
-            const botMsg: ChatMessage = {
-                id: Date.now().toString() + '-bot',
-                sessionId: response.sessionId,
-                role: 'bot',
-                content: response.answer,
-                createdAt: new Date().toISOString(),
-                citations: response.citations
-            };
-            setMessages(prev => [...prev, botMsg]);
-        } catch (error) {
-            console.error('Error sending message:', error);
-            const errorMsg: ChatMessage = {
-                id: Date.now().toString() + '-err',
-                sessionId: selectedSessionId || 'temp',
-                role: 'bot',
-                content: 'Lo siento, ocurrió un error al intentar comunicarme con Mimir. Por favor, intenta de nuevo.',
-                createdAt: new Date().toISOString()
-            };
-            setMessages(prev => [...prev, errorMsg]);
-        } finally {
+            await chatService.postChatMessageStream(
+                {
+                    projectId,
+                    sessionId: selectedSessionId || undefined,
+                    message: currentInput
+                },
+                (chunk) => {
+                    if (chunk.type === 'session_created') {
+                        actualSessionId = chunk.sessionId;
+                        setSelectedSessionId(actualSessionId);
+                        fetchSessions();
+                    } else if (chunk.type === 'token') {
+                        // Append token
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[streamingBotMessageIndex] = {
+                                ...newMessages[streamingBotMessageIndex],
+                                content: newMessages[streamingBotMessageIndex].content + chunk.text
+                            };
+                            return newMessages;
+                        });
+                        scrollToBottom();
+                    } else if (chunk.type === 'done') {
+                        // Update with final info
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[streamingBotMessageIndex] = {
+                                ...newMessages[streamingBotMessageIndex],
+                                sessionId: chunk.sessionId,
+                                content: chunk.finalAnswer,
+                                citations: chunk.citations
+                            };
+                            return newMessages;
+                        });
+                        setIsSending(false);
+                    }
+                },
+                (error) => {
+                    console.error('Streaming error:', error);
+                    setMessages(prev => {
+                        const newMessages = [...prev];
+                        newMessages[streamingBotMessageIndex] = {
+                            ...newMessages[streamingBotMessageIndex],
+                            content: 'Lo siento, ocurrió un error al intentar comunicarme con Mimir. Por favor, intenta de nuevo.'
+                        };
+                        return newMessages;
+                    });
+                    setIsSending(false);
+                }
+            );
+        } catch {
             setIsSending(false);
         }
     };
@@ -182,8 +214,8 @@ const ProjectChat: React.FC<ProjectChatProps> = ({ projectId }) => {
                                     key={session.id}
                                     onClick={() => setSelectedSessionId(session.id)}
                                     className={`w-full flex items-center p-3 rounded-lg text-left transition-colors ${selectedSessionId === session.id
-                                            ? 'bg-indigo-100 text-indigo-900 font-medium'
-                                            : 'hover:bg-gray-200 text-gray-700'
+                                        ? 'bg-indigo-100 text-indigo-900 font-medium'
+                                        : 'hover:bg-gray-200 text-gray-700'
                                         }`}
                                     title={session.title}
                                 >
@@ -249,10 +281,18 @@ const ProjectChat: React.FC<ProjectChatProps> = ({ projectId }) => {
                                             {/* Message Bubble */}
                                             <div className="flex flex-col">
                                                 <div className={`p-4 rounded-2xl ${isUser
-                                                        ? 'bg-indigo-600 text-white rounded-tr-none'
-                                                        : 'bg-gray-50 border border-gray-200 text-gray-800 rounded-tl-none prose prose-sm max-w-none'
+                                                    ? 'bg-indigo-600 text-white rounded-tr-none'
+                                                    : 'bg-gray-50 border border-gray-200 text-gray-800 rounded-tl-none prose prose-sm max-w-none'
                                                     }`}>
-                                                    <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                                                    {msg.content ? (
+                                                        <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                                                    ) : (
+                                                        <div className="flex items-center space-x-2 h-6 px-1 py-0.5">
+                                                            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                                            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                                            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 {/* Bot Citations */}
@@ -276,21 +316,7 @@ const ProjectChat: React.FC<ProjectChatProps> = ({ projectId }) => {
                                 );
                             })}
 
-                            {/* Loading Indicator for Sending */}
-                            {isSending && (
-                                <div className="flex justify-start">
-                                    <div className="flex max-w-[85%] flex-row">
-                                        <div className="shrink-0 w-10 h-10 rounded-full bg-green-100 text-green-600 mr-4 flex items-center justify-center">
-                                            <Bot size={20} />
-                                        </div>
-                                        <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 rounded-tl-none flex items-center space-x-2">
-                                            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                                            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                                            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
+                            {/* Loading indicator removed as the streaming message bubble acts as the placeholder */}
                             <div ref={messagesEndRef} className="h-4" />
                         </div>
                     )}
